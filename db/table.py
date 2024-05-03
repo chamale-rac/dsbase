@@ -1,70 +1,61 @@
-"""
-@file: table.py
-@package: db
-@description: Class to manage specific operations of the tables.
-
-@author: Samuel Chamalé
-@date: may 2024
-"""
+# Asegúrate de importar la clase ColumnFamily desde el archivo column_family.py
+from column_family import ColumnFamily
 
 
 class Table:
-    def __init__(self,  table_name, column_families=None) -> None:
+    def __init__(self, table_name, column_families=None) -> None:
         """
-        Initialize a new table
+        Initialize a new table with optional column families.
 
         Args:
-            table_name (str): Name of the table
-            column_families (list): An optional names of the column families to initialize the table
+            table_name (str): Name of the table.
+            column_families (list): An optional list of the names of the column families to initialize the table.
         """
-
         self.table_name = table_name
-        self.column_families = {
-            cf: {} for cf in column_families
-        } if column_families else {}
+        self.column_families = {}
+        if column_families:
+            for cf in column_families:
+                self.column_families[cf] = ColumnFamily(cf)
 
     def add_column_family(self, cf_name) -> str:
         """
-        Add a new column family to the table
+        Add a new column family to the table.
 
         Args:
-            cf_name (str): Name of the column family
+            cf_name (str): Name of the column family.
 
-          Returns:
-            str: Message with the result of the operation
+        Returns:
+            str: Message with the result of the operation.
         """
-
         if cf_name in self.column_families:
-            return f"Column family {cf_name} already exists"
+            return f"Column family {cf_name} already exists."
 
-        self.column_families[cf_name] = {}
-        return f"Column family {cf_name} added"
+        self.column_families[cf_name] = ColumnFamily(cf_name)
+        return f"Column family {cf_name} added successfully."
 
     def delete_column_family(self, cf_name) -> str:
         """
-        Delete a column family from the table
+        Delete a column family from the table.
 
         Args:
-            cf_name (str): Name of the column family
+            cf_name (str): Name of the column family to be deleted.
 
         Returns:
-            str: Message with the result of the operation
+            str: Message with the result of the operation.
         """
-
         if cf_name not in self.column_families:
-            return f"Column family {cf_name} does not exist"
+            return f"Column family {cf_name} does not exist."
 
         del self.column_families[cf_name]
-        return f"Column family {cf_name} deleted"
+        return f"Column family {cf_name} deleted successfully."
 
     def list_column_families(self) -> list:
         """
-        List all column families in the table
+        List all column families in the table.
 
         Returns:
-            list: List of column families
+            list: List of column family names.
         """
-
         return list(self.column_families.keys())
 
 
