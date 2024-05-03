@@ -1,5 +1,5 @@
 # Asegúrate de importar la clase ColumnFamily desde el archivo column_family.py
-from column_family import ColumnFamily
+from .column_family import ColumnFamily
 
 
 class Table:
@@ -13,9 +13,18 @@ class Table:
         """
         self.table_name = table_name
         self.column_families = {}
+
+        duplicated = []
         if column_families:
             for cf in column_families:
-                self.column_families[cf] = ColumnFamily(cf)
+                if cf not in self.column_families:
+                    self.column_families[cf] = ColumnFamily(cf)
+                else:
+                    duplicated.append(cf)
+
+        if duplicated:
+            print(
+                f"Warning: Column families {', '.join(duplicated)} defined more than once. Defaulting to one instance.")
 
     def add_column_family(self, cf_name) -> str:
         """

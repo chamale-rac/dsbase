@@ -1,5 +1,5 @@
 # Importamos la clase Table desde el archivo table.py
-from table import Table
+from .table import Table
 
 
 class Database:
