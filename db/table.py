@@ -1,77 +1,171 @@
-# Asegúrate de importar la clase ColumnFamily desde el archivo column_family.py
-from .column_family import ColumnFamily
+"""
+@file: table.py
+@package: db
+@description: Class to manage the tables inside the database.
+
+@author: Samuel Chamalé
+@date: may 2024
+"""
+
+from .row import Row
 
 
 class Table:
-    def __init__(self, table_name, column_families=None) -> None:
+    def __init__(self, column_family_names, max_versions=1):
         """
-        Initialize a new table with optional column families.
+        Initialize the table.
 
         Args:
-            table_name (str): Name of the table.
-            column_families (list): An optional list of the names of the column families to initialize the table.
+            column_family_names: A list containing the names of the column families.
+            max_versions: The maximum number of versions to keep for each qualifier.
         """
-        self.table_name = table_name
-        self.column_families = {}
+        self.rows = {}
+        self.column_family_names = column_family_names
+        self.max_versions = max_versions
+        self.is_enabled = True  # Tables are enabled by default
 
-        duplicated = []
-        if column_families:
-            for cf in column_families:
-                if cf not in self.column_families:
-                    self.column_families[cf] = ColumnFamily(cf)
-                else:
-                    duplicated.append(cf)
-
-        if duplicated:
-            print(
-                f"Warning: Column families {', '.join(duplicated)} defined more than once. Defaulting to one instance.")
-
-    def add_column_family(self, cf_name) -> str:
+    # DDL Operations
+    def create_row(self, row_key):
         """
-        Add a new column family to the table.
+        Create a new row in the table.
 
         Args:
-            cf_name (str): Name of the column family.
-
-        Returns:
-            str: Message with the result of the operation.
+            row_key: The key of the row.
         """
-        if cf_name in self.column_families:
-            return f"Column family {cf_name} already exists."
+        if row_key not in self.rows:
+            self.rows[row_key] = Row(
+                row_key, self.column_family_names, self.max_versions)
+        else:
+            print("Row already exists.")
 
-        self.column_families[cf_name] = ColumnFamily(cf_name)
-        return f"Column family {cf_name} added successfully."
-
-    def delete_column_family(self, cf_name) -> str:
+    def list_rows(self):
         """
-        Delete a column family from the table.
+        List all rows in the table.
+        """
+        return list(self.rows.keys())
+
+    def disable(self):
+        """
+        Disable the table.
+        """
+        self.is_enabled = False
+
+    def enable(self):
+        """
+        Enable the table.
+        """
+        self.is_enabled = True
+
+    def is_table_enabled(self):
+        """
+        Check if the table is enabled.       
+        """
+        return self.is_enabled
+
+    def drop_row(self, row_key):
+        """
+        Drop a row from the table.   
 
         Args:
-            cf_name (str): Name of the column family to be deleted.
-
-        Returns:
-            str: Message with the result of the operation.
+            row_key: The key of the row to be dropped.     
         """
-        if cf_name not in self.column_families:
-            return f"Column family {cf_name} does not exist."
+        if row_key in self.rows:
+            del self.rows[row_key]
 
-        del self.column_families[cf_name]
-        return f"Column family {cf_name} deleted successfully."
-
-    def list_column_families(self) -> list:
+    def drop_all_rows(self):
         """
-        List all column families in the table.
-
-        Returns:
-            list: List of column family names.
+        Drop all rows from the table.
         """
-        return list(self.column_families.keys())
+        self.rows.clear()
 
+    def describe(self):
+        """
+        Describe the table.
+        """
+        description = {}
+        for row_key, row in self.rows.items():
+            description[row_key] = {family: list(row.column_families[family].qualifiers.keys())
+                                    for family in row.column_families}
+        return description
 
-# Just for testing the basic Table object functionality
-if __name__ == "__main__":
-    table = Table("Usuarios", ["Info", "Contacto"])
-    print(table.add_column_family("DatosAdicionales"))
-    print(table.list_column_families())
-    print(table.delete_column_family("Contacto"))
-    print(table.list_column_families())
+    # DML Operations
+    def put(self, row_key, family_name, qualifier_name, value):
+        """
+        Add a new value to the table.
+
+        Args:
+            row_key: The key of the row.
+            family_name: The name of the column family.
+            qualifier_name: The name of the qualifier.
+            value: The value to be added.        
+        """
+        if not self.is_enabled:
+            print("Table is disabled.")
+            return
+        if row_key not in self.rows:
+            self.create_row(row_key)
+        self.rows[row_key].put(family_name, qualifier_name, value)
+
+    def get(self, row_key, family_name, qualifier_name, version=None):
+        """
+        Retrieve the value of the qualifier.
+
+        Args:
+            row_key: The key of the row.
+            family_name: The name of the column family.
+            qualifier_name: The name of the qualifier.
+            version: The version of the qualifier to retrieve. If not provided, the most recent version is returned.        
+        """
+        if row_key in self.rows:
+            return self.rows[row_key].get(family_name, qualifier_name, version)
+        return None
+
+    def scan(self, row_key=None):
+        """
+        Retrieve all qualifiers of the row.
+
+        Args:
+            row_key: The key of the row to scan. If not provided, all rows are scanned.
+        """
+        if row_key and row_key in self.rows:
+            return {row_key: self.rows[row_key].scan()}
+        elif row_key:
+            return None  # Row does not exist
+        else:
+            return {key: row.scan() for key, row in self.rows.items()}
+
+    def delete(self, row_key, family_name=None, qualifier_name=None, version=None):
+        """
+        Delete a specific qualifier or all qualifiers of a row.
+
+        Args:
+            row_key: The key of the row.
+            family_name: The name of the column family.
+            qualifier_name: The name of the qualifier to delete. If not provided, all qualifiers are deleted.
+            version: The version of the qualifier to delete. If not provided, all versions are deleted.
+        """
+        if row_key in self.rows:
+            self.rows[row_key].delete(family_name, qualifier_name, version)
+
+    def delete_all(self):
+        """
+        Delete all qualifiers of the table.
+        """
+        for row in self.rows.values():
+            row.delete_all()
+
+    def count(self):
+        """
+        Count the number of qualifiers in the table.
+        """
+        return sum(row.count() for row in self.rows.values())
+
+    def truncate(self):
+        """
+        Truncate the table.
+
+        This operation is equivalent to dropping all rows from the table.
+        """
+        self.disable()
+        self.drop_all_rows()
+        self.enable()

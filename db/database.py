@@ -1,62 +1,45 @@
-# Importamos la clase Table desde el archivo table.py
+"""
+@file: database.py
+@package: db
+@description: Class to manage the database and its tables.
+
+@author: Samuel Chamalé
+@date: may 2024
+"""
+
 from .table import Table
 
 
 class Database:
-    def __init__(self) -> None:
-        """
-        Initialize the database. Here should be load the initial state of the tables from file if needed.
-        """
+    def __init__(self):
         self.tables = {}
 
-    def create_table(self, table_name, column_families) -> str:
-        """
-        Create a new table in the database using the Table class to manage column families.
+    def create_table(self, table_name, column_family_names, max_versions=1):
+        if table_name not in self.tables:
+            self.tables[table_name] = Table(column_family_names, max_versions)
+            return self.tables[table_name]
+        else:
+            return None  # Return None if table already exists
 
-        Args:
-            table_name (str): Name of the table
-            column_families (list): List of column families
-
-        Returns:
-            str: Message with the result of the operation
-        """
-        if table_name in self.tables:
-            return f"Table {table_name} already exists"
-
-        # Aquí se crea un objeto de la clase Table con las familias de columnas proporcionadas
-        self.tables[table_name] = Table(table_name, column_families)
-        return f"Table {table_name} created successfully"
-
-    def list_tables(self) -> list:
-        """
-        List all tables in the database
-
-        Returns:
-            list: List of table names
-        """
+    def list_tables(self):
         return list(self.tables.keys())
 
-    def delete_table(self, table_name) -> str:
-        """
-        Delete a table from the database
+    def drop_table(self, table_name):
+        if table_name in self.tables:
+            del self.tables[table_name]
+            return True
+        else:
+            return None  # Return None if table does not exist
 
-        Args:
-            table_name (str): Name of the table to be deleted
+    def get_table(self, table_name):
+        return self.tables.get(table_name, None)
 
-        Returns:
-            str: Message with the result of the operation
-        """
-        if table_name not in self.tables:
-            return f"Table {table_name} does not exist"
+    def describe_database(self):
+        description = {table_name: table.describe()
+                       for table_name, table in self.tables.items()}
+        return description
 
-        del self.tables[table_name]
-        return f"Table {table_name} deleted successfully"
-
-
-# Just for testing the basic Database object functionality
-if __name__ == "__main__":
-    db = Database()
-    print(db.create_table("Usuarios", ["Info", "Contacto"]))
-    print(db.list_tables())
-    print(db.delete_table("Usuarios"))
-    print(db.list_tables())
+    def truncate_database(self):
+        for table in self.tables.values():
+            table.truncate()
+        return True
