@@ -84,3 +84,17 @@ class Family:
         Count the number of qualifiers in the column family.
         """
         return sum(len(qual.data) for qual in self.qualifiers.values())
+
+    """
+    Serialization methods
+    """
+
+    def to_dict(self):
+        return {qual_name: qual.to_dict() for qual_name, qual in self.qualifiers.items()}
+
+    @staticmethod
+    def from_dict(data, max_versions):
+        family = Family(max_versions)
+        family.qualifiers = {name: Qualifier.from_dict(
+            versions, max_versions) for name, versions in data.items()}
+        return family

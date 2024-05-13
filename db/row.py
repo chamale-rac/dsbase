@@ -89,3 +89,17 @@ class Row:
 
     def count(self):
         return sum(fam.count() for fam in self.column_families.values())
+
+    """
+    Serialization methods
+    """
+
+    def to_dict(self):
+        return {family_name: family.to_dict() for family_name, family in self.column_families.items()}
+
+    @staticmethod
+    def from_dict(data, row_key, max_versions):
+        row = Row(row_key, [], max_versions)
+        row.column_families = {name: Family.from_dict(
+            family, max_versions) for name, family in data.items()}
+        return row

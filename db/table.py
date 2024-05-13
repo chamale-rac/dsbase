@@ -169,3 +169,17 @@ class Table:
         self.disable()
         self.drop_all_rows()
         self.enable()
+
+    """
+    Serialization methods
+    """
+
+    def to_dict(self):
+        return {row_key: row.to_dict() for row_key, row in self.rows.items()}
+
+    @staticmethod
+    def from_dict(data, column_family_names, max_versions):
+        table = Table(column_family_names, max_versions)
+        table.rows = {key: Row.from_dict(
+            row_data, key, max_versions) for key, row_data in data.items()}
+        return table

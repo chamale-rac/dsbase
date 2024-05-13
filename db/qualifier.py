@@ -71,3 +71,17 @@ class Qualifier:
         else:
             # Clear all versions
             self.data.clear()
+
+    """
+    Serialization methods
+    """
+
+    def to_dict(self):
+        return self.data
+
+    @staticmethod
+    def from_dict(data, max_versions):
+        qualifier = Qualifier(max_versions)
+        qualifier.data = data
+        qualifier.current_version = max(data.keys(), default=0)
+        return qualifier
