@@ -7,6 +7,9 @@
 @date: may 2024
 """
 
+import os
+import json
+
 from .table import Table
 
 
@@ -43,3 +46,18 @@ class Database:
         for table in self.tables.values():
             table.truncate()
         return True
+
+    def save_to_disk(self, directory):
+        os.makedirs(directory, exist_ok=True)
+        for table_name, table in self.tables.items():
+            with open(os.path.join(directory, f"{table_name}.json"), 'w') as file:
+                json.dump(table.to_dict(), file, indent=4)
+
+    def load_from_disk(self, directory):
+        for file_name in os.listdir(directory):
+            if file_name.endswith('.json'):
+                table_name = file_name[:-5]  # remove '.json'
+                with open(os.path.join(directory, file_name), 'r') as file:
+                    data = json.load(file)
+                # Placeholder for column_family_names and max_versions
+                self.tables[table_name] = Table.from_dict(data, [], 1)
