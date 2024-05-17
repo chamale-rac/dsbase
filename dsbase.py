@@ -70,6 +70,30 @@ class DSBase(cmd.Cmd):
         for table in tables:
             print(table)
 
+    def do_disable(self, arg):
+        "Disable a table: disable <table_name>"
+        res = self.database.disable_table(arg)
+        if res:
+            print(f"Table {arg} disabled.")
+        else:
+            print(f"Table {arg} not found.")
+
+    def do_enable(self, arg):
+        "Enable a table: enable <table_name>"
+        res = self.database.enable_table(arg)
+        if res:
+            print(f"Table {arg} enabled.")
+        else:
+            print(f"Table {arg} not found.")
+
+    def do_is_enabled(self, arg):
+        "Check if a table is enabled: is_enabled <table_name>"
+        res = self.database.is_enabled(arg)
+        if res:
+            print(f"Table {arg} is enabled.")
+        else:
+            print(f"Table {arg} is disabled.")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

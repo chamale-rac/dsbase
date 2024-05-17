@@ -10,13 +10,16 @@ class Database:
 
         if checkDirectoryExists(self.base_path):
             self.metadata = self.loadMetadata()
-            print(self.metadata)
         elif createDirectory(self.base_path):
             self.createMetadata()
             self.metadata = METADATA_TEMPLATE
 
     def table_exists(self, table_name):
         return table_name in self.metadata['tables']
+
+    #############################
+    ###      DDL Commands     ###
+    #############################
 
     def create_table(self, table_name, column_families, max_versions=1, is_enabled=True):
         if self.table_exists(table_name):
@@ -43,6 +46,23 @@ class Database:
 
     def get_table(self, table_name):
         pass
+
+    def disable_table(self, table_name):
+        if not self.table_exists(table_name):
+            return False
+        self.metadata['tables'][table_name]['is_enabled'] = False
+        return self.updateMetadata(self.metadata)
+
+    def enable_table(self, table_name):
+        if not self.table_exists(table_name):
+            return False
+        self.metadata['tables'][table_name]['is_enabled'] = True
+        return self.updateMetadata(self.metadata)
+
+    def is_enabled(self, table_name):
+        if not self.table_exists(table_name):
+            return False
+        return self.metadata['tables'][table_name]['is_enabled']
 
     #############################
     ###   General Commands    ###
