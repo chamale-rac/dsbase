@@ -110,6 +110,30 @@ class DSBase(cmd.Cmd):
         else:
             print(f"Table {arg} not found.")
 
+    def do_exists(self, arg):
+        "Check if a table exists: exist <table_name>"
+        res = self.database.table_exists(arg)
+        if res:
+            print(f"Table {arg} exists.")
+        else:
+            print(f"Table {arg} does not exist.")
+
+    def do_drop(self, arg):
+        "Drop a table: drop <table_name>"
+        res = self.database.drop_table(arg)
+        if res:
+            print(f"Table {arg} dropped.")
+        else:
+            print(f"Table {arg} not found.")
+
+    def do_drop_all(self, arg):
+        "Drop all tables in the database."
+        self.database.drop_all_tables()
+        print("All tables dropped.")
+
+    def do_alter(self, arg):
+        raise NotImplementedError
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

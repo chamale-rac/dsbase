@@ -1,4 +1,4 @@
-from .utils import checkDirectoryExists, checkFileExists, loadJsonFile, createDirectory, createJsonFile, updateJsonFile
+from .utils import checkDirectoryExists, loadJsonFile, createDirectory, createJsonFile, updateJsonFile, deleteJsonFile
 from .constants import METADATA_TEMPLATE, METADATA_SAVE_NAME, BASES_PATH
 from .Table import Table
 
@@ -68,6 +68,25 @@ class Database:
         if not self.table_exists(table_name):
             return False
         return self.metadata['tables'][table_name]
+
+    def drop_table(self, table_name):
+        if not self.table_exists(table_name):
+            return False
+        del self.metadata['tables'][table_name]
+
+        # Now remove the table file
+        table_path = self.base_path + table_name + '.json'
+        deleteJsonFile(table_path)
+
+        return self.updateMetadata(self.metadata)
+
+    def drop_all_tables(self):
+        for table in self.list_tables():
+            self.drop_table(table)
+
+    def alter_table(self, table_name, column_families, max_versions, is_enabled):
+        # TODO: Cause this involves messing up with the content of the json file
+        pass
 
     #############################
     ###   General Commands    ###
