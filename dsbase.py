@@ -63,6 +63,13 @@ class DSBase(cmd.Cmd):
         else:
             print(f"Table {table_name} already exists.")
 
+    def do_list(self, arg):
+        "List all tables in the database."
+        tables = self.database.list_tables()
+        print("Tables:")
+        for table in tables:
+            print(table)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
