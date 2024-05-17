@@ -14,3 +14,5 @@ METADATA_TEMPLATE = {
     }
 }
 METADATA_SAVE_NAME = 'metadata.json'
+
+PRINT_DICTS_WITH = 'json'  # avaible 'json', 'yaml' or 'pprint'

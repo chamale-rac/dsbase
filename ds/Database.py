@@ -64,6 +64,11 @@ class Database:
             return False
         return self.metadata['tables'][table_name]['is_enabled']
 
+    def describe_table(self, table_name):
+        if not self.table_exists(table_name):
+            return False
+        return self.metadata['tables'][table_name]
+
     #############################
     ###   General Commands    ###
     #############################

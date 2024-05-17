@@ -1,6 +1,7 @@
 import os
 import errno
 import json
+from .constants import PRINT_DICTS_WITH
 
 
 def checkFileExists(file_path):
@@ -55,3 +56,16 @@ def deleteJsonFile(file_path):
         os.remove(file_path)
         return True
     return False
+
+
+def printDict(data):
+    if PRINT_DICTS_WITH == 'pprint':
+        import pprint
+        pprint.pprint(data)
+    elif PRINT_DICTS_WITH == 'json':
+        print(json.dumps(data, indent=4))
+    elif PRINT_DICTS_WITH == 'yaml':
+        import yaml
+        print(yaml.dump(data, default_flow_style=False))
+    else:
+        print(data)

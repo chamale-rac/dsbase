@@ -1,6 +1,7 @@
 import cmd
 import argparse
 from ds.Database import Database
+from ds.utils import printDict
 
 
 class DSBase(cmd.Cmd):
@@ -19,6 +20,10 @@ class DSBase(cmd.Cmd):
         "Exit DSBase."
         return True
 
+    def do_clear(self, arg):
+        "Clear the screen."
+        print("\033[H\033[J")
+
     # def do_help(self, arg): This is a built-in command
 
     #############################
@@ -35,6 +40,8 @@ class DSBase(cmd.Cmd):
     def do_whoami(self, arg):
         "Get the user of the database."
         print(self.database.get_whoami())
+
+    # TODO: consider adding a do_info for obtaining metadata.
 
     #############################
     ###      DDL Commands     ###
@@ -93,6 +100,15 @@ class DSBase(cmd.Cmd):
             print(f"Table {arg} is enabled.")
         else:
             print(f"Table {arg} is disabled.")
+
+    def do_describe(self, arg):
+        "Describe the structure of a table: describe <table_name>"
+        res = self.database.describe_table(arg)
+        if res:
+            print("Table structure:")
+            printDict(res)
+        else:
+            print(f"Table {arg} not found.")
 
 
 if __name__ == "__main__":
