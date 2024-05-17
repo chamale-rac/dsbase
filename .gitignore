@@ -160,3 +160,6 @@ cython_debug/
 #.idea/
 
 .vscode/
+
+# TODO: Remove this when project is ready, this dir will contain the examples.
+bases/

@@ -19,6 +19,9 @@ class DatabaseCLI(cmd.Cmd):
             return
         table_name = args[0]
         column_families = args[1:]
+
+        # split column families into
+
         self.db.create_table(table_name, column_families)
         print(
             f"Table {table_name} created with column families {column_families}.")
