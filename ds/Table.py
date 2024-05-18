@@ -1,6 +1,7 @@
 from .utils import loadJsonFile, updateJsonFile
 from .constants import BASES_PATH
 
+
 class Table:
     def __init__(self, table_name, base_name, column_families, versions):
         self.table_name = table_name
@@ -83,3 +84,5 @@ class Table:
 
         return updateJsonFile(self.table_path, self.data), "Data deleted successfully"
 
+    def scan(self):
+        return self.data
