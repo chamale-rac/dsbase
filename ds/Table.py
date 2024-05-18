@@ -1,8 +1,8 @@
-from utils import loadJsonFile, updateJsonFile
-from constants import BASES_PATH
+from .utils import loadJsonFile, updateJsonFile
+from .constants import BASES_PATH
 
 class Table:
-    def __init__(self, table_name, column_families, base_name, versions):
+    def __init__(self, table_name, base_name, column_families, versions):
         self.table_name = table_name
         self.column_families = column_families
         self.is_enabled = True
