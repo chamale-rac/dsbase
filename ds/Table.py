@@ -1,6 +1,7 @@
 from .utils import loadJsonFile, updateJsonFile
 from .constants import BASES_PATH
 
+
 class Table:
     def __init__(self, table_name, base_name, column_families, versions):
         self.table_name = table_name
@@ -12,9 +13,9 @@ class Table:
 
     def loadData(self, file_path):
         return loadJsonFile(file_path)
-    
-    def put(self, row_id, col_family, col_name , value):
-        
+
+    def put(self, row_id, col_family, col_name, value):
+
         if not col_family in self.column_families:
             return False, "Column family not found in table"
 
@@ -23,5 +24,5 @@ class Table:
 
         return updateJsonFile(self.table_path, self.data)
 
-    # def update():
-        # 
+    def scan(self):
+        return self.data

@@ -152,7 +152,8 @@ class DSBase(cmd.Cmd):
             table_name, row_id, col_family, col_name, value)
 
         if status:
-            print(f"Put value {value} in table {table_name}.")
+            print(
+                f"Put value {value} in table {table_name}. Row id: {row_id}. Column family: {col_family}. Column qualifier: {col_name}.")
         else:
             print(f"Error: {message}")
 
