@@ -15,8 +15,7 @@ class Table:
     def loadData(self, file_path):
         return loadJsonFile(file_path)
 
-    def put(self, row_id: str, col_family: str, col_name: str , value: str):
-
+    def put(self, row_id: str, col_family: str, col_name: str, value: str):
         row_id = str(row_id)
         col_family = str(col_family)
         col_name = str(col_name)
@@ -32,15 +31,19 @@ class Table:
             self.data[row_id][col_family] = {}
 
         if col_name not in self.data[row_id][col_family]:
-            self.data[row_id][col_family][col_name] = {}
+            self.data[row_id][col_family][col_name] = []
 
-        self.data[row_id][col_family][col_name] = value
+        # Handling versions
+        value_versions = self.data[row_id][col_family][col_name]
+        value_versions.insert(0, value)
+        value_versions = value_versions[:self.versions]
+
+        self.data[row_id][col_family][col_name] = value_versions
 
         return updateJsonFile(self.table_path, self.data), "Data inserted successfully"
 
     # ‘<table name>’, ‘<row>’, ‘<column name >’, ‘<time stamp>’
-    def delete(self, row_id: str, col_family: str, col_name: str , version: str):
-
+    def delete(self, row_id: str, col_family: str, col_name: str, version: str):
         row_id = str(row_id)
         col_family = str(col_family)
         col_name = str(col_name)
@@ -49,6 +52,9 @@ class Table:
             version = int(version)
         except:
             return False, "Version should be an integer"
+
+        if version >= self.versions or version < 0:
+            return False, f"Version should be between 0 and max_versions: {self.versions}"
 
         if not col_family in self.column_families:
             return False, "Column family not found in table"
@@ -62,12 +68,17 @@ class Table:
         if col_name not in self.data[row_id][col_family]:
             return False, "Column name not found in column family"
 
-        del self.data[row_id][col_family][col_name]
+        value_versions = self.data[row_id][col_family][col_name]
+
+        if version > len(value_versions):
+            return False, "This version has not been set yet"
+
+        value_versions.pop(version)
+        self.data[row_id][col_family][col_name] = value_versions
 
         return updateJsonFile(self.table_path, self.data), "Data deleted successfully"
-    
-    def deleteall(self, row_id: str, col_family: str):
 
+    def deleteall(self, row_id: str):
         row_id = str(row_id)
         col_family = str(col_family)
 
@@ -77,10 +88,7 @@ class Table:
         if row_id not in self.data:
             return False, "Row not found in table"
 
-        if col_family not in self.data[row_id]:
-            return False, "Column family not found in row"
-
-        del self.data[row_id][col_family]
+        del self.data[row_id]
 
         return updateJsonFile(self.table_path, self.data), "Data deleted successfully"
 
