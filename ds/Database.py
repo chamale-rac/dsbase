@@ -170,3 +170,14 @@ class Database:
         table = Table(table_name, self.base_name, column_families, versions)
 
         return table.delete_all(row_id)
+
+    def count(self, table_name):
+        if not self.table_exists(table_name):
+            return False, "Table does not exist"
+
+        versions = self.metadata['tables'][table_name]['max_versions']
+        column_families = self.metadata['tables'][table_name]['column_families']
+
+        table = Table(table_name, self.base_name, column_families, versions)
+
+        return table.count()

@@ -217,6 +217,21 @@ class DSBase(cmd.Cmd):
         else:
             print(f"Error: {message}")
 
+    def do_count(self, arg):
+        "Count the number of rows in a table: count <table_name>"
+        args = arg.split()
+        if len(args) < 1:
+            print("Error: Specify table name.")
+            return
+
+        table_name = args[0]
+        status, count = self.database.count(table_name)
+
+        if status:
+            print(f"Number of rows in table {table_name}: {count}")
+        else:
+            print(count)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

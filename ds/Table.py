@@ -117,3 +117,6 @@ class Table:
         print(self.data)
 
         return updateJsonFile(self.table_path, self.data), "Data deleted successfully"
+
+    def count(self):
+        return True, len(self.data)
