@@ -8,7 +8,6 @@ class Table:
         self.column_families = column_families
         self.is_enabled = True
         self.table_path = BASES_PATH + base_name + "/" + table_name + '.json'
-        print("table_path:", self.table_path, end="\n")
         self.data = self.loadData(self.table_path)
         self.versions = versions
 
@@ -31,16 +30,40 @@ class Table:
             self.data[row_id][col_family] = {}
 
         if col_name not in self.data[row_id][col_family]:
-            self.data[row_id][col_family][col_name] = []
+            self.data[row_id][col_family][col_name] = {}
 
         # Handling versions
         value_versions = self.data[row_id][col_family][col_name]
-        value_versions.insert(0, value)
-        value_versions = value_versions[:self.versions]
+        if not value_versions:
+            next_version = 1
+        else:
+            next_version = max([
+                int(key) for key in value_versions.keys()
+            ]) + 1
+
+        value_versions[str(next_version)] = value
+
+        # If the number of versions exceeds 'self.versions', remove the version with the smallest key
+        if len(value_versions) > self.versions:
+            min_version = min([
+                int(key) for key in value_versions.keys()
+            ])
+            del value_versions[str(min_version)]
 
         self.data[row_id][col_family][col_name] = value_versions
 
         return updateJsonFile(self.table_path, self.data), "Data inserted successfully"
+
+    def get(self, row_id: str):
+        row_id = str(row_id)
+
+        if row_id not in self.data:
+            return False, "Row not found in table"
+
+        return True, self.data[row_id]
+
+    def scan(self):
+        return True, self.data
 
     # ‘<table name>’, ‘<row>’, ‘<column name >’, ‘<time stamp>’
     def delete(self, row_id: str, col_family: str, col_name: str, version: str):
@@ -52,9 +75,6 @@ class Table:
             version = int(version)
         except:
             return False, "Version should be an integer"
-
-        if version >= self.versions or version < 0:
-            return False, f"Version should be between 0 and max_versions: {self.versions}"
 
         if not col_family in self.column_families:
             return False, "Column family not found in table"
@@ -70,31 +90,30 @@ class Table:
 
         value_versions = self.data[row_id][col_family][col_name]
 
-        if version > len(value_versions):
-            return False, "This version has not been set yet"
+        if str(version) not in value_versions.keys():
+            return False, "This version does not exist"
 
-        value_versions.pop(version)
+        del value_versions[str(version)]  # Delete the specified version
+
+        # If the number of versions exceeds 'self.versions', remove the version with the smallest key
+        if len(value_versions) > self.versions:
+            min_version = min([
+                int(key) for key in value_versions.keys()
+            ])
+            del value_versions[str(min_version)]
+
         self.data[row_id][col_family][col_name] = value_versions
 
         return updateJsonFile(self.table_path, self.data), "Data deleted successfully"
 
-    def deleteall(self, row_id: str):
+    def delete_all(self, row_id: str):
         row_id = str(row_id)
 
         if row_id not in self.data:
             return False, "Row not found in table"
 
+        print(self.data)
         del self.data[row_id]
+        print(self.data)
 
         return updateJsonFile(self.table_path, self.data), "Data deleted successfully"
-
-    def scan(self):
-        return self.data
-
-    def get(self, row_id: str):
-        row_id = str(row_id)
-
-        if row_id not in self.data:
-            return False, "Row not found in table"
-
-        return self.data[row_id], "Data fetched successfully"

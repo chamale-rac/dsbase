@@ -44,10 +44,7 @@ def createJsonFile(file_path, data):
 def updateJsonFile(file_path, data):
     if not checkFileExists(file_path):
         return False
-    current_data = loadJsonFile(file_path)
-    # if current_data:  # If the file is not empty
-    current_data.update(data)
-    return writeJsonFile(file_path, current_data)
+    return writeJsonFile(file_path, data)
     # return False
 
 

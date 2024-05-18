@@ -128,6 +128,28 @@ class Database:
         table = Table(table_name, self.base_name, column_families, versions)
         return table.put(row_id=row_id, col_family=col_family, col_name=col_name, value=value)
 
+    def get(self, table_name: str, row_id: str):
+        if not self.table_exists(table_name):
+            return False, "Table does not exist"
+
+        versions = self.metadata['tables'][table_name]['max_versions']
+        column_families = self.metadata['tables'][table_name]['column_families']
+
+        table = Table(table_name, self.base_name, column_families, versions)
+
+        return table.get(row_id)
+
+    def scan(self, table_name):
+        if not self.table_exists(table_name):
+            return False, "Table does not exist"
+
+        versions = self.metadata['tables'][table_name]['max_versions']
+        column_families = self.metadata['tables'][table_name]['column_families']
+
+        table = Table(table_name, self.base_name, column_families, versions)
+
+        return table.scan()
+
     def delete(self, table_name, row_id, col_family, col_name, version):
         if not self.table_exists(table_name):
             return False, "Table does not exist"
@@ -148,25 +170,3 @@ class Database:
         table = Table(table_name, self.base_name, column_families, versions)
 
         return table.delete_all(row_id)
-
-    def scan(self, table_name):
-        if not self.table_exists(table_name):
-            return False, "Table does not exist"
-
-        versions = self.metadata['tables'][table_name]['max_versions']
-        column_families = self.metadata['tables'][table_name]['column_families']
-
-        table = Table(table_name, self.base_name, column_families, versions)
-
-        return table.scan()
-
-    def get(self, table_name: str, row_id: str):
-        if not self.table_exists(table_name):
-            return False, "Table does not exist"
-
-        versions = self.metadata['tables'][table_name]['max_versions']
-        column_families = self.metadata['tables'][table_name]['column_families']
-
-        table = Table(table_name, self.base_name, column_families, versions)
-
-        return table.get(row_id)

@@ -157,17 +157,65 @@ class DSBase(cmd.Cmd):
         else:
             print(f"Error: {message}")
 
-    def do_delete(self, arg):
-        raise NotImplementedError
+    def do_get(self, arg):
+        "Get a value from a table: get <table_name> <row_id>"
+        args = arg.split()
+        if len(args) < 2:
+            print("Error: Specify table name and row id.")
+            return
 
-    def do_delete_all(self, arg):
-        raise NotImplementedError
+        table_name, row_id = args
+        status, data = self.database.get(table_name, row_id)
+
+        if status:
+            print("Data:")
+            printDict(data)
+        else:
+            print(data)
 
     def do_scan(self, arg):
-        raise NotImplementedError
+        "Scan a table: scan <table_name>"
+        status, data = self.database.scan(arg)
 
-    def do_get(self, arg):
-        raise NotImplementedError
+        if status:
+            print("Data:")
+            printDict(data)
+        else:
+            print(data)
+
+    def do_delete(self, arg):
+        "Delete a value from a table: delete <table_name> <row_id> <column_family> <column_qualifier> <version>"
+        args = arg.split()
+        if len(args) != 5:
+            print(
+                "Error: Specify table name, row id, column family, column qualifier, and version.")
+            return
+
+        table_name, row_id, col_family, col_name, version = args
+        status, message = self.database.delete(
+            table_name, row_id, col_family, col_name, version)
+
+        if status:
+            print(
+                f"Deleted value in table {table_name}. Row id: {row_id}. Column family: {col_family}. Column qualifier: {col_name}. Version: {version}.")
+        else:
+            print(f"Error: {message}")
+
+    def do_delete_all(self, arg):
+        "Delete all values of a row from a table: delete_all <table_name> <row_id>"
+        args = arg.split()
+        if len(args) < 2:
+            print("Error: Specify table name and row id.")
+            return
+
+        table_name, row_id = args
+        status, message = self.database.delete_all(table_name, row_id)
+
+        if status:
+            print(
+                f"Deleted all values of row {row_id} in table {table_name}.")
+        else:
+            print(f"Error: {message}")
 
 
 if __name__ == "__main__":
