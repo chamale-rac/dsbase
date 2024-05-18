@@ -144,12 +144,12 @@ class DSBase(cmd.Cmd):
         args = arg.split()
         if len(args) < 5:
             print(
-                "Error: Specify table name, row id, column family, column qualifier, and value.")
+                "Error: Specify table name, row key, column family, column qualifier, and value.")
             return
 
         table_name, row_key, column_family, column_qualifier, value = args
         status, message = self.database.put(
-            table_name, row_id, column_family, column_qualifier, value)
+            table_name, row_key, column_family, column_qualifier, value)
 
         if status:
             print(f"Put value {value} in table {table_name}.")
