@@ -157,6 +157,18 @@ class DSBase(cmd.Cmd):
         else:
             print(f"Error: {message}")
 
+    def do_delete(self, arg):
+        raise NotImplementedError
+
+    def do_delete_all(self, arg):
+        raise NotImplementedError
+
+    def do_scan(self, arg):
+        raise NotImplementedError
+
+    def do_get(self, arg):
+        raise NotImplementedError
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

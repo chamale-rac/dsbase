@@ -80,10 +80,6 @@ class Table:
 
     def deleteall(self, row_id: str):
         row_id = str(row_id)
-        col_family = str(col_family)
-
-        if not col_family in self.column_families:
-            return False, "Column family not found in table"
 
         if row_id not in self.data:
             return False, "Row not found in table"
@@ -94,3 +90,11 @@ class Table:
 
     def scan(self):
         return self.data
+
+    def get(self, row_id: str):
+        row_id = str(row_id)
+
+        if row_id not in self.data:
+            return False, "Row not found in table"
+
+        return self.data[row_id], "Data fetched successfully"
