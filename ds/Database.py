@@ -123,6 +123,7 @@ class Database:
         if not self.table_exists(table_name):
             return False, "Table does not exist."
         versions = self.metadata['tables'][table_name]['max_versions']
+        column_families = self.metadata['tables'][table_name]['column_families']
 
-        table = Table(self.base_path, table_name, self.base_name, versions)
+        table = Table(table_name, self.base_name, column_families, versions)
         return table.put(row_id=row_id, col_family=col_family, col_name=col_name, value=value)
