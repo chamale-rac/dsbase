@@ -29,6 +29,7 @@ class DSBase(cmd.Cmd):
     #############################
     ###   General Commands    ###
     #############################
+
     def do_status(self, arg):
         "Get the status of the database."
         print(self.database.get_status())
@@ -133,6 +134,27 @@ class DSBase(cmd.Cmd):
 
     def do_alter(self, arg):
         raise NotImplementedError
+
+    #############################
+    ###      DML Commands     ###
+    #############################
+
+    def do_put(self, arg):
+        "Put a value in a table: put <table_name> <row_key> <column_family> <column_qualifier> <value>"
+        args = arg.split()
+        if len(args) < 5:
+            print(
+                "Error: Specify table name, row key, column family, column qualifier, and value.")
+            return
+
+        table_name, row_key, column_family, column_qualifier, value = args
+        status, message = self.database.put(
+            table_name, row_key, column_family, column_qualifier, value)
+
+        if status:
+            print(f"Put value {value} in table {table_name}.")
+        else:
+            print(f"Error: {message}")
 
 
 if __name__ == "__main__":

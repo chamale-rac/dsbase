@@ -1,2 +1,3 @@
-# hdoop-hdfs
-Custom shell for hdoop hdfas managing functions
+# DSBase
+
+DSBase inspired by HBase

@@ -5,6 +5,7 @@ from .Table import Table
 
 class Database:
     def __init__(self, base_path):
+        self.base_name = base_path
         self.base_path = BASES_PATH + base_path + '/'
         self.metadata = {}
 
@@ -40,12 +41,6 @@ class Database:
 
     def list_tables(self):
         return list(self.metadata['tables'].keys())
-
-    def drop_table(self, table_name):
-        pass
-
-    def get_table(self, table_name):
-        pass
 
     def disable_table(self, table_name):
         if not self.table_exists(table_name):
@@ -119,3 +114,13 @@ class Database:
     def updateMetadata(self, metadata):
         self.metadata = metadata
         return updateJsonFile(self.base_path + METADATA_SAVE_NAME, metadata)
+
+    #############################
+    ###     DML Commands      ###
+    #############################
+
+    def put(self, table_name, row_id, column_family, column, value):
+        if not self.table_exists(table_name):
+            return False, "Table does not exist."
+        table = Table(self.base_path, table_name, self.base_name)
+        return table.put(row_id=row_id, column_family=column_family, column=column, value=value)
