@@ -122,5 +122,7 @@ class Database:
     def put(self, table_name, row_id, column_family, column, value):
         if not self.table_exists(table_name):
             return False, "Table does not exist."
-        table = Table(self.base_path, table_name, self.base_name)
+        versions = self.metadata['tables'][table_name]['max_versions']
+
+        table = Table(self.base_path, table_name, self.base_name, versions)
         return table.put(row_id=row_id, column_family=column_family, column=column, value=value)
