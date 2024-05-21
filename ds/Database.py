@@ -1,4 +1,4 @@
-from .utils import checkDirectoryExists, loadJsonFile, createDirectory, createJsonFile, updateJsonFile, deleteJsonFile
+from .utils import checkDirectoryExists, loadJsonFile, createDirectory, createJsonFile, updateJsonFile, deleteJsonFile, removeDirectory, renameFile
 from .constants import METADATA_TEMPLATE, METADATA_SAVE_NAME, BASES_PATH
 from .Table import Table
 
@@ -24,7 +24,12 @@ class Database:
 
     def create_table(self, table_name, column_families, max_versions=1, is_enabled=True):
         if self.table_exists(table_name):
-            return False
+            return False, "Table already exists."
+
+        # Check there are not repeated column families
+        if len(column_families) != len(set(column_families)):
+            return False, "Column families must be unique."
+
         # First modify the metadata
         self.metadata['tables'][table_name] = {
             'column_families': column_families,
@@ -33,11 +38,18 @@ class Database:
         }
 
         # Then create the table in a json file
-        table_path = self.base_path + table_name + '.json'
-        if createJsonFile(table_path, {}):
-            self.updateMetadata(self.metadata)
-            return True
-        return False
+        table_path_dir = self.base_path + table_name
+
+        if not createDirectory(table_path_dir):
+            return False, "Error creating table directory."
+
+        column_families_path = table_path_dir + '/'
+
+        for column_family in column_families:
+            if not createJsonFile(column_families_path + column_family + '.json', {}):
+                return False, "Error creating column family directory."
+
+        return self.updateMetadata(self.metadata), "Table and column families created successfully."
 
     def list_tables(self):
         return list(self.metadata['tables'].keys())
@@ -70,19 +82,63 @@ class Database:
         del self.metadata['tables'][table_name]
 
         # Now remove the table file
-        table_path = self.base_path + table_name + '.json'
-        deleteJsonFile(table_path)
+        table_path = self.base_path + table_name
+
+        if not removeDirectory(table_path):
+            return False, "Error removing table directory."
 
         return self.updateMetadata(self.metadata)
 
     def drop_all_tables(self):
-        for table in self.list_tables():
-            self.drop_table(table)
+        for table_name in self.list_tables():
+            self.drop_table(table_name)
 
-    def alter_table(self, table_name, column_families, max_versions, is_enabled):
-        # TODO: Cause this involves messing up with the content of the json file
-        pass
+    def alter_table(self, table_name, flag, value):
+        if not self.table_exists(table_name):
+            return False, "Table does not exist."
 
+        versions = self.metadata['tables'][table_name]['max_versions']
+        column_families = self.metadata['tables'][table_name]['column_families']
+
+        if flag in ["DELETE", "ADD", "RENAME"]:
+            if flag == "DELETE":
+                if not value in column_families:
+                    return False, "Column family does not exist."
+
+                status = deleteJsonFile(self.base_path + table_name +
+                                        '/' + value + '.json')
+                if not status:
+                    return False, "Error deleting column family."
+
+                del column_families[value]
+            elif flag == "RENAME":
+                old_col, new_col = value.split(':')
+                if old_col not in column_families:
+                    return False, "Column family does not exist."
+
+                if new_col in column_families:
+                    return False, "Column family already exists."
+
+                if old_col == new_col:
+                    return False, "No changes made. Column family names are the same."
+
+                if renameFile(self.base_path + table_name + '/' + old_col + '.json', self.base_path + table_name + '/' + new_col + '.json'):
+                    return False, "Error renaming column family."
+
+                column_families[new_col] = column_families[old_col]
+                del column_families[old_col]
+
+            elif flag == "ADD":
+                new_col = value
+                if new_col in column_families:
+                    return False, "Column family already exists."
+
+                if not createJsonFile(self.base_path + table_name + '/' + new_col + '.json', {}):
+                    return False, "Error creating column family."
+        else:
+            return False, "Invalid flag."
+
+        return True, "Table altered successfully."
     #############################
     ###   General Commands    ###
     #############################

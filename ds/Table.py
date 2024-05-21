@@ -1,18 +1,23 @@
 from .utils import loadJsonFile, updateJsonFile
 from .constants import BASES_PATH
+import os
 
 
 class Table:
     def __init__(self, table_name, base_name, column_families, versions):
         self.table_name = table_name
+        self.base_name = base_name
         self.column_families = column_families
         self.is_enabled = True
-        self.table_path = BASES_PATH + base_name + "/" + table_name + '.json'
-        self.data = self.loadData(self.table_path)
+        self.table_path = BASES_PATH + base_name + "/" + table_name + '/'
         self.versions = versions
 
-    def loadData(self, file_path):
-        return loadJsonFile(file_path)
+    def loadFamily(self, col_family):
+        return loadJsonFile(os.path.join(
+            self.table_path, f"{col_family}.json"))
+
+    def saveFamily(self, col_family, family_data):
+        return updateJsonFile(os.path.join(self.table_path, f"{col_family}.json"), family_data)
 
     def put(self, row_id: str, col_family: str, col_name: str, value: str):
         row_id = str(row_id)
@@ -20,50 +25,61 @@ class Table:
         col_name = str(col_name)
         value = str(value)
 
-        if not col_family in self.column_families:
+        if col_family not in self.column_families:
             return False, "Column family not found in table"
 
-        if row_id not in self.data:
-            self.data[row_id] = {}
+        family_data = self.loadFamily(col_family)
+        if not family_data:
+            return False, "Error loading family data"
 
-        if col_family not in self.data[row_id]:
-            self.data[row_id][col_family] = {}
+        if row_id not in family_data[col_family]:
+            family_data[col_family][row_id] = {}
 
-        if col_name not in self.data[row_id][col_family]:
-            self.data[row_id][col_family][col_name] = {}
+        if col_name not in family_data[col_family][row_id]:
+            family_data[col_family][row_id][col_name] = {}
 
         # Handling versions
-        value_versions = self.data[row_id][col_family][col_name]
+        value_versions = family_data[col_family][row_id][col_name]
         if not value_versions:
             next_version = 1
         else:
-            next_version = max([
-                int(key) for key in value_versions.keys()
-            ]) + 1
+            next_version = max([int(key) for key in value_versions.keys()]) + 1
 
         value_versions[str(next_version)] = value
 
         # If the number of versions exceeds 'self.versions', remove the version with the smallest key
         if len(value_versions) > self.versions:
-            min_version = min([
-                int(key) for key in value_versions.keys()
-            ])
+            min_version = min([int(key) for key in value_versions.keys()])
             del value_versions[str(min_version)]
 
-        self.data[row_id][col_family][col_name] = value_versions
+        family_data[col_family][row_id][col_name] = value_versions
 
-        return updateJsonFile(self.table_path, self.data), "Data inserted successfully"
+        saved = self.saveFamily(col_family, family_data)
 
-    def get(self, row_id: str):
+        if not saved:
+            return False, "Error saving data"
+        return True, "Data saved successfully"
+
+    def get(self, row_id: str, col_family: str):
         row_id = str(row_id)
+        col_family = str(col_family)
 
-        if row_id not in self.data:
+        if col_family not in self.column_families:
+            return False, "Column family not found in table"
+
+        family_data = self.loadFamily(col_family)
+
+        if row_id not in family_data[col_family]:
             return False, "Row not found in table"
 
-        return True, self.data[row_id]
+        return True, self.data[col_family][row_id]
 
     def scan(self):
-        return True, self.data
+        all_data = {}
+        for cf in self.column_families:
+            family_data = self.loadFamily(cf)
+            all_data[cf] = family_data
+        return True, all_data
 
     # ‘<table name>’, ‘<row>’, ‘<column name >’, ‘<time stamp>’
     def delete(self, row_id: str, col_family: str, col_name: str, version: str):
@@ -73,22 +89,21 @@ class Table:
 
         try:
             version = int(version)
-        except:
+        except ValueError:
             return False, "Version should be an integer"
 
-        if not col_family in self.column_families:
+        if col_family not in self.column_families:
             return False, "Column family not found in table"
 
-        if row_id not in self.data:
+        family_data = self.loadFamily(col_family)
+
+        if row_id not in family_data[col_family]:
             return False, "Row not found in table"
 
-        if col_family not in self.data[row_id]:
-            return False, "Column family not found in row"
-
-        if col_name not in self.data[row_id][col_family]:
+        if col_name not in family_data[col_family][row_id]:
             return False, "Column name not found in column family"
 
-        value_versions = self.data[row_id][col_family][col_name]
+        value_versions = family_data[col_family][row_id][col_name]
 
         if str(version) not in value_versions.keys():
             return False, "This version does not exist"
@@ -97,26 +112,35 @@ class Table:
 
         # If the number of versions exceeds 'self.versions', remove the version with the smallest key
         if len(value_versions) > self.versions:
-            min_version = min([
-                int(key) for key in value_versions.keys()
-            ])
+            min_version = min([int(key) for key in value_versions.keys()])
             del value_versions[str(min_version)]
 
-        self.data[row_id][col_family][col_name] = value_versions
+        self.data[col_family][row_id][col_name] = value_versions
 
-        return updateJsonFile(self.table_path, self.data), "Data deleted successfully"
+        return self.saveFamily(col_family, family_data), "Data deleted successfully"
 
-    def delete_all(self, row_id: str):
+    def delete_all(self, row_id: str, col_family: str):
         row_id = str(row_id)
+        col_family = str(col_family)
 
-        if row_id not in self.data:
+        if col_family not in self.column_families:
+            return False, "Column family not found in table"
+
+        family_data = self.loadFamily(col_family)
+
+        if row_id not in family_data[col_family]:
             return False, "Row not found in table"
 
-        print(self.data)
-        del self.data[row_id]
-        print(self.data)
+        del family_data[col_family][row_id]
 
-        return updateJsonFile(self.table_path, self.data), "Data deleted successfully"
+        return self.saveFamily(col_family, family_data), "Data deleted successfully"
 
     def count(self):
-        return True, len(self.data)
+        rows = set()
+        for cf in self.column_families:
+            family_data = self.loadFamily(cf)
+            if not family_data:
+                return False, "Error loading family data"
+            family_data_keys = family_data.keys()
+            rows.update(family_data_keys)
+        return True, len(rows)

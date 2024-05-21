@@ -18,6 +18,22 @@ def createDirectory(directory_path):
         return True
 
 
+def renameFile(old_file_path, new_file_path):
+    try:
+        os.rename(old_file_path, new_file_path)
+        return True
+    except OSError as e:
+        return False
+
+
+def removeDirectory(directory_path):
+    try:
+        os.rmdir(directory_path)
+        return True
+    except OSError as e:
+        return False
+
+
 def checkDirectoryExists(directory_path):
     return os.path.exists(directory_path)
 
