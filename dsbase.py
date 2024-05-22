@@ -232,6 +232,14 @@ class DSBase(cmd.Cmd):
         else:
             print(count)
 
+    def do_truncate(self, arg):
+        "Truncate a table: truncate <table_name>"
+        status, message = self.database.truncate(arg)
+        if status:
+            print(f"Table {arg} truncated.")
+        else:
+            print(f"Error: {message}")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

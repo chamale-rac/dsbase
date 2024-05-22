@@ -244,9 +244,11 @@ class Database:
 
         table_metadata = self.metadata['tables'][table_name]
 
+        print("  - Disabling table...")
         if not self.disable_table(table_name):
             return False, "Error disabling table"
 
+        print("  - Dropping table...")
         if not self.drop_table(table_name):
             return False, "Error dropping table"
 
