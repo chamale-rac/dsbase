@@ -237,3 +237,23 @@ class Database:
         table = Table(table_name, self.base_name, column_families, versions)
 
         return table.count()
+
+    def truncate(self, table_name):
+        if not self.table_exists(table_name):
+            return False, "Table does not exist"
+
+        table_metadata = self.metadata['tables'][table_name]
+
+        if not self.disable_table(table_name):
+            return False, "Error disabling table"
+
+        if not self.drop_table(table_name):
+            return False, "Error dropping table"
+
+        # Create the table again AKA recreate the table
+        table_name = table_name
+        column_families = table_metadata['column_families']
+        versions = table_metadata['max_versions']
+        is_enabled = True
+
+        return self.create_table(table_name, column_families, versions, is_enabled)
