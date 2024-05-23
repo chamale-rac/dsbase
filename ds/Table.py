@@ -13,11 +13,11 @@ class Table:
         self.versions = versions
 
     def loadFamily(self, col_family):
-        return loadJsonFile(os.path.join(
-            self.table_path, f"{col_family}.json"))
+        print(self.table_path + col_family + '.json')
+        return loadJsonFile(self.table_path + col_family + '.json')
 
     def saveFamily(self, col_family, family_data):
-        return updateJsonFile(os.path.join(self.table_path, f"{col_family}.json"), family_data)
+        return updateJsonFile(self.table_path + col_family + '.json', family_data)
 
     def put(self, row_id: str, col_family: str, col_name: str, value: str):
         row_id = str(row_id)
@@ -29,17 +29,17 @@ class Table:
             return False, "Column family not found in table"
 
         family_data = self.loadFamily(col_family)
-        if not family_data:
+        if family_data is None:
             return False, "Error loading family data"
 
-        if row_id not in family_data[col_family]:
-            family_data[col_family][row_id] = {}
+        if row_id not in family_data:
+            family_data[row_id] = {}
 
-        if col_name not in family_data[col_family][row_id]:
-            family_data[col_family][row_id][col_name] = {}
+        if col_name not in family_data[row_id]:
+            family_data[row_id][col_name] = {}
 
         # Handling versions
-        value_versions = family_data[col_family][row_id][col_name]
+        value_versions = family_data[row_id][col_name]
         if not value_versions:
             next_version = 1
         else:
@@ -52,7 +52,7 @@ class Table:
             min_version = min([int(key) for key in value_versions.keys()])
             del value_versions[str(min_version)]
 
-        family_data[col_family][row_id][col_name] = value_versions
+        family_data[row_id][col_name] = value_versions
 
         saved = self.saveFamily(col_family, family_data)
 
@@ -69,7 +69,7 @@ class Table:
 
         family_data = self.loadFamily(col_family)
 
-        if row_id not in family_data[col_family]:
+        if row_id not in family_data:
             return False, "Row not found in table"
 
         return True, self.data[col_family][row_id]
@@ -97,13 +97,13 @@ class Table:
 
         family_data = self.loadFamily(col_family)
 
-        if row_id not in family_data[col_family]:
+        if row_id not in family_data:
             return False, "Row not found in table"
 
-        if col_name not in family_data[col_family][row_id]:
+        if col_name not in family_data[row_id]:
             return False, "Column name not found in column family"
 
-        value_versions = family_data[col_family][row_id][col_name]
+        value_versions = family_data[row_id][col_name]
 
         if str(version) not in value_versions.keys():
             return False, "This version does not exist"
@@ -128,10 +128,10 @@ class Table:
 
         family_data = self.loadFamily(col_family)
 
-        if row_id not in family_data[col_family]:
+        if row_id not in family_data:
             return False, "Row not found in table"
 
-        del family_data[col_family][row_id]
+        del family_data[row_id]
 
         return self.saveFamily(col_family, family_data), "Data deleted successfully"
 
@@ -139,7 +139,7 @@ class Table:
         rows = set()
         for cf in self.column_families:
             family_data = self.loadFamily(cf)
-            if not family_data:
+            if family_data is None:
                 return False, "Error loading family data"
             family_data_keys = family_data.keys()
             rows.update(family_data_keys)
