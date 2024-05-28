@@ -83,15 +83,21 @@ class Database:
 
         # Now remove the table file
         table_path = self.base_path + table_name
-
+        print(table_path)
         if not removeDirectory(table_path):
             return False, "Error removing table directory."
 
-        return self.updateMetadata(self.metadata)
+        return self.updateMetadata(self.metadata), "Table dropped successfully."
 
     def drop_all_tables(self):
+        success = True
         for table_name in self.list_tables():
-            self.drop_table(table_name)
+            success, _ = self.drop_table(table_name)
+
+            if not success:
+                return False, "Error dropping tables."
+
+        return success, "All tables dropped successfully."
 
     def alter_table(self, table_name, flag, value):
         if not self.table_exists(table_name):
@@ -112,7 +118,12 @@ class Database:
 
                 del column_families[value]
             elif flag == "RENAME":
+                # Check it has the format old_col:new_col
+                if ':' not in value:
+                    return False, "Invalid format. Use old_col:new_col."
+
                 old_col, new_col = value.split(':')
+
                 if old_col not in column_families:
                     return False, "Column family does not exist."
 

@@ -2,6 +2,7 @@ import os
 import errno
 import json
 from .constants import PRINT_DICTS_WITH
+import shutil
 
 
 def checkFileExists(file_path):
@@ -28,7 +29,7 @@ def renameFile(old_file_path, new_file_path):
 
 def removeDirectory(directory_path):
     try:
-        os.rmdir(directory_path)
+        shutil.rmtree(directory_path)
         return True
     except OSError as e:
         return False

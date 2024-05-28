@@ -129,11 +129,25 @@ class DSBase(cmd.Cmd):
 
     def do_drop_all(self, arg):
         "Drop all tables in the database."
-        self.database.drop_all_tables()
-        print("All tables dropped.")
+        status, message = self.database.drop_all_tables()
+        if status:
+            print("All tables dropped.")
+        else:
+            print("Error dropping tables:", message)
 
     def do_alter(self, arg):
-        raise NotImplementedError
+        "Alter a table: alter <table_name> <flag> <value>\nFlags: DELETE, RENAME, ADD\nIMPORTANT: Use ':' for old_col: new_col for RENAME flag."
+        args = arg.split()
+        if len(args) < 3:
+            print("Error: Specify table name, flag, and value.")
+            return
+
+        table_name, flag, value = args
+        success, message = self.alter_table(table_name, flag, value)
+        if success:
+            print("Table altered successfully.")
+        else:
+            print("Error altering table:", message)
 
     #############################
     ###      DML Commands     ###
