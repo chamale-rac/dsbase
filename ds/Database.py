@@ -18,6 +18,29 @@ class Database:
     def table_exists(self, table_name):
         return table_name in self.metadata['tables']
 
+    def is_enabled(self, table_name):
+        if not self.table_exists(table_name):
+            return False
+        return self.metadata['tables'][table_name]['is_enabled']
+
+    #############################
+    ###     Decorators        ###
+    #############################
+
+    def check_table_exists(func):
+        def wrapper(self, table_name, *args, **kwargs):
+            if not self.table_exists(table_name):
+                return False, "Table does not exist."
+            return func(self, table_name, *args, **kwargs)
+        return wrapper
+
+    def check_table_enabled(func):
+        def wrapper(self, table_name, *args, **kwargs):
+            if not self.is_enabled(table_name):
+                return False, "Table is not enabled."
+            return func(self, table_name, *args, **kwargs)
+        return wrapper
+
     #############################
     ###      DDL Commands     ###
     #############################
@@ -54,41 +77,32 @@ class Database:
     def list_tables(self):
         return list(self.metadata['tables'].keys())
 
+    @check_table_exists
     def disable_table(self, table_name):
-        if not self.table_exists(table_name):
-            return False
         self.metadata['tables'][table_name]['is_enabled'] = False
         return self.updateMetadata(self.metadata)
 
+    @check_table_exists
     def enable_table(self, table_name):
-        if not self.table_exists(table_name):
-            return False
         self.metadata['tables'][table_name]['is_enabled'] = True
         return self.updateMetadata(self.metadata)
 
-    def is_enabled(self, table_name):
-        if not self.table_exists(table_name):
-            return False
-        return self.metadata['tables'][table_name]['is_enabled']
-
+    @check_table_exists
     def describe_table(self, table_name):
-        if not self.table_exists(table_name):
-            return False
         return self.metadata['tables'][table_name]
 
+    @check_table_exists
     def drop_table(self, table_name):
-        if not self.table_exists(table_name):
-            return False
         del self.metadata['tables'][table_name]
 
         # Now remove the table file
         table_path = self.base_path + table_name
-        print(table_path)
         if not removeDirectory(table_path):
             return False, "Error removing table directory."
 
         return self.updateMetadata(self.metadata), "Table dropped successfully."
 
+    @check_table_exists
     def drop_all_tables(self):
         success = True
         for table_name in self.list_tables():
@@ -99,10 +113,8 @@ class Database:
 
         return success, "All tables dropped successfully."
 
+    @check_table_exists
     def alter_table(self, table_name, flag, value):
-        if not self.table_exists(table_name):
-            return False, "Table does not exist."
-
         versions = self.metadata['tables'][table_name]['max_versions']
         column_families = self.metadata['tables'][table_name]['column_families']
 
@@ -150,6 +162,7 @@ class Database:
             return False, "Invalid flag."
 
         return True, "Table altered successfully."
+
     #############################
     ###   General Commands    ###
     #############################
@@ -186,73 +199,62 @@ class Database:
     ###     DML Commands      ###
     #############################
 
+    @check_table_exists
+    @check_table_enabled
     def put(self, table_name, row_id, col_family, col_name, value):
-        if not self.table_exists(table_name):
-            return False, "Table does not exist."
         versions = self.metadata['tables'][table_name]['max_versions']
         column_families = self.metadata['tables'][table_name]['column_families']
 
         table = Table(table_name, self.base_name, column_families, versions)
         return table.put(row_id=row_id, col_family=col_family, col_name=col_name, value=value)
 
+    @check_table_exists
+    @check_table_enabled
     def get(self, table_name: str, row_id: str):
-        if not self.table_exists(table_name):
-            return False, "Table does not exist"
-
         versions = self.metadata['tables'][table_name]['max_versions']
         column_families = self.metadata['tables'][table_name]['column_families']
 
         table = Table(table_name, self.base_name, column_families, versions)
-
         return table.get(row_id)
 
+    @check_table_exists
+    @check_table_enabled
     def scan(self, table_name):
-        if not self.table_exists(table_name):
-            return False, "Table does not exist"
-
         versions = self.metadata['tables'][table_name]['max_versions']
         column_families = self.metadata['tables'][table_name]['column_families']
 
         table = Table(table_name, self.base_name, column_families, versions)
-
         return table.scan()
 
+    @check_table_exists
+    @check_table_enabled
     def delete(self, table_name, row_id, col_family, col_name, version):
-        if not self.table_exists(table_name):
-            return False, "Table does not exist"
-
         versions = self.metadata['tables'][table_name]['max_versions']
         column_families = self.metadata['tables'][table_name]['column_families']
 
         table = Table(table_name, self.base_name, column_families, versions)
         return table.delete(row_id, col_family, col_name, version)
 
+    @check_table_exists
+    @check_table_enabled
     def delete_all(self, table_name, row_id: str):
-        if not self.table_exists(table_name):
-            return False, "Table does not exist"
-
         versions = self.metadata['tables'][table_name]['max_versions']
         column_families = self.metadata['tables'][table_name]['column_families']
 
         table = Table(table_name, self.base_name, column_families, versions)
-
         return table.delete_all(row_id)
 
+    @check_table_exists
+    @check_table_enabled
     def count(self, table_name):
-        if not self.table_exists(table_name):
-            return False, "Table does not exist"
-
         versions = self.metadata['tables'][table_name]['max_versions']
         column_families = self.metadata['tables'][table_name]['column_families']
 
         table = Table(table_name, self.base_name, column_families, versions)
-
         return table.count()
 
+    @check_table_exists
     def truncate(self, table_name):
-        if not self.table_exists(table_name):
-            return False, "Table does not exist"
-
         table_metadata = self.metadata['tables'][table_name]
 
         print("  - Disabling table...")
