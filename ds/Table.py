@@ -78,7 +78,10 @@ class Table:
         all_data = {}
         for cf in self.column_families:
             family_data = self.loadFamily(cf)
-            all_data[cf] = family_data
+            for id, data in family_data.items():
+                if id not in all_data:
+                    all_data[id] = {}
+                all_data[id][cf] = data
         return True, all_data
 
     # ‘<table name>’, ‘<row>’, ‘<column name >’, ‘<time stamp>’
