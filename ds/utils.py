@@ -24,6 +24,7 @@ def renameFile(old_file_path, new_file_path):
         os.rename(old_file_path, new_file_path)
         return True
     except OSError as e:
+        print(e)
         return False
 
 

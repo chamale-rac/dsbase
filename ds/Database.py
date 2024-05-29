@@ -118,17 +118,20 @@ class Database:
         versions = self.metadata['tables'][table_name]['max_versions']
         column_families = self.metadata['tables'][table_name]['column_families']
 
+        # Convert the column_families array to a dictionary for easier manipulation
+        column_families_dict = {cf: {} for cf in column_families}
+
         if flag in ["DELETE", "ADD", "RENAME"]:
             if flag == "DELETE":
-                if not value in column_families:
+                if not value in column_families_dict:
                     return False, "Column family does not exist."
 
-                status = deleteJsonFile(self.base_path + table_name +
-                                        '/' + value + '.json')
+                status = deleteJsonFile(
+                    self.base_path + table_name + '/' + value + '.json')
                 if not status:
                     return False, "Error deleting column family."
 
-                del column_families[value]
+                del column_families_dict[value]
             elif flag == "RENAME":
                 # Check it has the format old_col:new_col
                 if ':' not in value:
@@ -136,30 +139,38 @@ class Database:
 
                 old_col, new_col = value.split(':')
 
-                if old_col not in column_families:
+                if old_col not in column_families_dict:
                     return False, "Column family does not exist."
 
-                if new_col in column_families:
+                if new_col in column_families_dict:
                     return False, "Column family already exists."
 
                 if old_col == new_col:
                     return False, "No changes made. Column family names are the same."
 
-                if renameFile(self.base_path + table_name + '/' + old_col + '.json', self.base_path + table_name + '/' + new_col + '.json'):
+                if not renameFile(self.base_path + table_name + '/' + old_col + '.json', self.base_path + table_name + '/' + new_col + '.json'):
                     return False, "Error renaming column family."
 
-                column_families[new_col] = column_families[old_col]
-                del column_families[old_col]
+                column_families_dict[new_col] = column_families_dict[old_col]
+
+                # Delete the old column family
+                del column_families_dict[old_col]
 
             elif flag == "ADD":
                 new_col = value
-                if new_col in column_families:
+                if new_col in column_families_dict:
                     return False, "Column family already exists."
 
                 if not createJsonFile(self.base_path + table_name + '/' + new_col + '.json', {}):
                     return False, "Error creating column family."
+
+                column_families_dict[new_col] = {}
         else:
             return False, "Invalid flag."
+
+        # Convert the dictionary back to an array
+        self.metadata['tables'][table_name]['column_families'] = list(
+            column_families_dict.keys())
 
         return True, "Table altered successfully."
 
