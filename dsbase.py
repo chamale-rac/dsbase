@@ -3,9 +3,11 @@ import argparse
 from ds.Database import Database
 from ds.utils import printDict
 import time
+from functools import wraps
 
 
 def timing(func):
+    @wraps(func)
     def wrapper(*args, **kwargs):
         start_time = time.time()
         result = func(*args, **kwargs)

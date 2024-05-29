@@ -267,13 +267,13 @@ def generate_metadata(output_dir):
 if __name__ == "__main__":
     base_output_dir = './bases/school'
     course_codes = generate_courses_data(
-        os.path.join(base_output_dir, 'courses'), 80)
+        os.path.join(base_output_dir, 'courses'), 8)
     student_keys = generate_students_data(
-        os.path.join(base_output_dir, 'students'), 300)
+        os.path.join(base_output_dir, 'students'), 25)
     teacher_keys = generate_teachers_data(
-        os.path.join(base_output_dir, 'teachers'), 20)
+        os.path.join(base_output_dir, 'teachers'), 3)
     generate_course_teacher_data(os.path.join(
-        base_output_dir, 'course_teacher'), course_codes, teacher_keys, 80)
+        base_output_dir, 'course_teacher'), course_codes, teacher_keys, 20)
     generate_course_student_data(os.path.join(
-        base_output_dir, 'course_student'), course_codes, student_keys, 500)
+        base_output_dir, 'course_student'), course_codes, student_keys, 100)
     generate_metadata(base_output_dir)
