@@ -26,20 +26,39 @@ def generate_courses_data(output_dir, registers=500):
         while code in course_codes:
             code = fake.bothify(text='???###')
         course_codes.append(code)
-        return {
+
+        record = {
             "course_info": {
-                "faculty": faculty,
-                "course_name": course,
-                "course_code": code,
+                "faculty": {"1": faculty},
+                "course_name": {"1": course},
+                "course_code": {"1": code},
             },
             "description": {
-                "description": fake.text(max_nb_chars=200),
-                "credits": str(random.randint(1, 5))
+                "description": {"1": fake.text(max_nb_chars=200)},
+                "credits": {"1": str(random.randint(1, 5))}
             },
             "instructor": {
-                "instructor_name": fake.name()
+                "instructor_name": {"1": fake.name()}
             }
         }
+
+        # Randomly omit some column families or qualifiers
+        if random.random() > 0.8:
+            del record["description"]["description"]
+        if random.random() > 0.8:
+            del record["description"]
+        if random.random() > 0.8:
+            del record["instructor"]
+
+        # Randomly add versions for some qualifiers
+        for column_family in record:
+            for qualifier in record[column_family]:
+                versions = random.randint(1, 3)
+                if versions > 1:
+                    record[column_family][qualifier] = {str(i): fake.text(
+                        max_nb_chars=200) for i in range(1, versions + 1)}
+
+        return record
 
     for _ in range(registers):
         key = fake.bothify(text='??????')
@@ -74,27 +93,47 @@ def generate_students_data(output_dir, registers=10000):
     records = {}
     student_keys = []
 
+    def generate_student_record():
+        record = {
+            "personal_info": {
+                "dpi": {"1": fake.random_number(digits=6, fix_len=True)},
+                "name": {"1": fake.first_name()},
+                "lastname": {"1": fake.last_name()},
+                "birthday": {"1": fake.date_of_birth().isoformat()}
+            },
+            "contact_info": {
+                "email": {"1": fake.email()},
+                "address": {"1": fake.address()},
+                "phone_number": {"1": fake.phone_number()}
+            },
+            "academic_info": {
+                "career": {"1": fake.random_element(careers)},
+                "number": {"1": fake.random_number(digits=8, fix_len=True)}
+            }
+        }
+
+        # Randomly omit some column families or qualifiers
+        if random.random() > 0.8:
+            del record["personal_info"]["dpi"]
+        if random.random() > 0.8:
+            del record["contact_info"]["email"]
+        if random.random() > 0.8:
+            del record["academic_info"]
+
+        # Randomly add versions for some qualifiers
+        for column_family in record:
+            for qualifier in record[column_family]:
+                versions = random.randint(1, 3)
+                if versions > 1:
+                    record[column_family][qualifier] = {str(i): fake.text(
+                        max_nb_chars=200) for i in range(1, versions + 1)}
+
+        return record
+
     for _ in range(registers):
         key = fake.bothify(text='??????')
         student_keys.append(key)
-        record = {
-            "personal_info": {
-                "dpi": fake.random_number(digits=6, fix_len=True),
-                "name": fake.first_name(),
-                "lastname": fake.last_name(),
-                "birthday": fake.date_of_birth().isoformat()
-            },
-            "contact_info": {
-                "email": fake.email(),
-                "address": fake.address(),
-                "phone_number": fake.phone_number()
-            },
-            "academic_info": {
-                "career": fake.random_element(careers),
-                "number": fake.random_number(digits=8, fix_len=True)
-            }
-        }
-        records[key] = record
+        records[key] = generate_student_record()
 
     os.makedirs(output_dir, exist_ok=True)
     for key, record in records.items():
@@ -117,27 +156,47 @@ def generate_teachers_data(output_dir, registers=1000):
     teacher_records = {}
     teacher_keys = []
 
+    def generate_teacher_record():
+        record = {
+            "personal_info": {
+                "dpi": {"1": fake.random_number(digits=6, fix_len=True)},
+                "name": {"1": fake.first_name()},
+                "lastname": {"1": fake.last_name()},
+                "birthday": {"1": fake.date_of_birth().isoformat()}
+            },
+            "contact_info": {
+                "email": {"1": fake.email()},
+                "address": {"1": fake.address()},
+                "phone_number": {"1": fake.phone_number()}
+            },
+            "professional_info": {
+                "career": {"1": fake.job()},
+                "number": {"1": fake.random_number(digits=8, fix_len=True)}
+            }
+        }
+
+        # Randomly omit some column families or qualifiers
+        if random.random() > 0.8:
+            del record["personal_info"]["dpi"]
+        if random.random() > 0.8:
+            del record["contact_info"]["email"]
+        if random.random() > 0.8:
+            del record["professional_info"]
+
+        # Randomly add versions for some qualifiers
+        for column_family in record:
+            for qualifier in record[column_family]:
+                versions = random.randint(1, 3)
+                if versions > 1:
+                    record[column_family][qualifier] = {str(i): fake.text(
+                        max_nb_chars=200) for i in range(1, versions + 1)}
+
+        return record
+
     for _ in range(registers):
         key = fake.bothify(text='??????')
         teacher_keys.append(key)
-        record = {
-            "personal_info": {
-                "dpi": fake.random_number(digits=6, fix_len=True),
-                "name": fake.first_name(),
-                "lastname": fake.last_name(),
-                "birthday": fake.date_of_birth().isoformat()
-            },
-            "contact_info": {
-                "email": fake.email(),
-                "address": fake.address(),
-                "phone_number": fake.phone_number()
-            },
-            "professional_info": {
-                "career": fake.job(),
-                "number": fake.random_number(digits=8, fix_len=True)
-            }
-        }
-        teacher_records[key] = record
+        teacher_records[key] = generate_teacher_record()
 
     os.makedirs(output_dir, exist_ok=True)
     for key, record in teacher_records.items():
@@ -159,17 +218,34 @@ def generate_teachers_data(output_dir, registers=1000):
 def generate_course_teacher_data(output_dir, course_codes, teacher_keys, registers=1000):
     course_teacher_records = {}
 
-    for _ in range(registers):
+    def generate_course_teacher_record():
         teacher_key = random.choice(teacher_keys)
         course_code = random.choice(course_codes)
         composite_key = f"{course_code}_{teacher_key}"
         record = {
             "assignment_info": {
-                "role": "Instructor",
-                "semester": random.choice(["Fall", "Spring", "Summer"]),
-                "year": random.randint(2000, 2023)
+                "role": {"1": "Instructor"},
+                "semester": {"1": random.choice(["Fall", "Spring", "Summer"])},
+                "year": {"1": random.randint(2000, 2023)}
             }
         }
+
+        # Randomly omit some qualifiers
+        if random.random() > 0.8:
+            del record["assignment_info"]["semester"]
+
+        # Randomly add versions for some qualifiers
+        for column_family in record:
+            for qualifier in record[column_family]:
+                versions = random.randint(1, 3)
+                if versions > 1:
+                    record[column_family][qualifier] = {str(i): fake.text(
+                        max_nb_chars=200) for i in range(1, versions + 1)}
+
+        return composite_key, record
+
+    for _ in range(registers):
+        composite_key, record = generate_course_teacher_record()
         course_teacher_records[composite_key] = record
 
     os.makedirs(output_dir, exist_ok=True)
@@ -191,16 +267,33 @@ def generate_course_teacher_data(output_dir, course_codes, teacher_keys, registe
 def generate_course_student_data(output_dir, course_codes, student_keys, registers=5000):
     course_student_records = {}
 
-    for _ in range(registers):
+    def generate_course_student_record():
         student_key = random.choice(student_keys)
         course_code = random.choice(course_codes)
         composite_key = f"{course_code}_{student_key}"
         record = {
             "performance_info": {
-                "grade": random.randint(50, 100),
-                "attendance": f"{random.randint(75, 100)}%"
+                "grade": {"1": random.randint(50, 100)},
+                "attendance": {"1": f"{random.randint(75, 100)}%"}
             }
         }
+
+        # Randomly omit some qualifiers
+        if random.random() > 0.8:
+            del record["performance_info"]["attendance"]
+
+        # Randomly add versions for some qualifiers
+        for column_family in record:
+            for qualifier in record[column_family]:
+                versions = random.randint(1, 3)
+                if versions > 1:
+                    record[column_family][qualifier] = {str(i): fake.text(
+                        max_nb_chars=200) for i in range(1, versions + 1)}
+
+        return composite_key, record
+
+    for _ in range(registers):
+        composite_key, record = generate_course_student_record()
         course_student_records[composite_key] = record
 
     os.makedirs(output_dir, exist_ok=True)
@@ -275,5 +368,5 @@ if __name__ == "__main__":
     generate_course_teacher_data(os.path.join(
         base_output_dir, 'course_teacher'), course_codes, teacher_keys, 20)
     generate_course_student_data(os.path.join(
-        base_output_dir, 'course_student'), course_codes, student_keys, 100)
+        base_output_dir, 'course_student'), course_codes, student_keys, 1000)
     generate_metadata(base_output_dir)
