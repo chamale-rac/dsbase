@@ -283,6 +283,22 @@ class DSBase(cmd.Cmd):
         else:
             print(f"Error: {message}")
 
+    @timing
+    def do_put_many(self, arg):
+        "Put many values in a table: put_many <table_name> <file_path>"
+        args = arg.split()
+        if len(args) < 2:
+            print("Error: Specify table name and file path.")
+            return
+
+        table_name, file_path = args
+        status, message = self.database.put_many(table_name, file_path)
+
+        if status:
+            print(f"Values from {file_path} inserted into table {table_name}.")
+        else:
+            print(f"Error: {message}")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

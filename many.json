@@ -1,0 +1,45 @@
+{
+  "stanford": {
+    "stats": {
+      "ranking": "Top 10"
+    },
+    "information": {
+      "location": "Stanford, CA",
+      "website": "http://www.stanford.edu",
+      "acceptance_rate": "5%"
+    }
+  },
+  "harvard": {
+    "stats": {
+      "ranking": "Top 5"
+    },
+    "information": {
+      "location": "Cambridge, MA",
+      "website": "http://www.harvard.edu",
+      "acceptance_rate": "4.6%"
+    }
+  },
+  "mit": {
+    "stats": {
+      "ranking": "Top 5"
+    },
+    "information": {
+      "location": "Cambridge, MA",
+      "website": "http://www.mit.edu",
+      "acceptance_rate": "6.7%"
+    }
+  },
+  "uc_berkeley": {
+    "stats": {
+      "ranking": "Top 20"
+    },
+    "information": {
+      "location": "Berkeley, CA",
+      "website": "http://www.berkeley.edu",
+      "acceptance_rate": "17%"
+    },
+    "league": {
+      "division": "Pac-12"
+    }
+  }
+}

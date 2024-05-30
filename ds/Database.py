@@ -218,6 +218,39 @@ class Database:
         table = Table(table_name, self.base_name, column_families, versions)
         return table.put(row_id=row_id, col_family=col_family, col_name=col_name, value=value)
 
+    def create_list_from_json(self, data):
+        result = []
+        for key, attributes in data.items():
+            for col_family, qualifiers in attributes.items():
+                for col_name, value in qualifiers.items():
+                    result.append((key, col_family, col_name, value))
+        return result
+
+    @check_table_exists
+    @check_table_enabled
+    def put_many(self, table_name, file_path):
+        versions = self.metadata['tables'][table_name]['max_versions']
+        column_families = self.metadata['tables'][table_name]['column_families']
+
+        table = Table(table_name, self.base_name, column_families, versions)
+
+        # Read the file
+        data = loadJsonFile(file_path)
+        if data is False:
+            return False, "Error reading file."
+
+        # Create a list of tuples from the json file
+        data_list = self.create_list_from_json(data)
+
+        # Put the data in the table
+        for row_id, col_family, col_name, value in data_list:
+            status, message = table.put(
+                row_id=row_id, col_family=col_family, col_name=col_name, value=value)
+            if not status:
+                return False, message
+
+        return True, "Data inserted successfully."
+
     @check_table_exists
     @check_table_enabled
     def get(self, table_name: str, row_id: str):
