@@ -132,7 +132,7 @@ class DSBase(cmd.Cmd):
 
     @timing
     def do_exists(self, arg):
-        "Check if a table exists: exist <table_name>"
+        "Check if a table exists: exists <table_name>"
         res = self.database.table_exists(arg)
         if res:
             print(f"Table {arg} exists.")

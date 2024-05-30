@@ -102,7 +102,6 @@ class Database:
 
         return self.updateMetadata(self.metadata), "Table dropped successfully."
 
-    @check_table_exists
     def drop_all_tables(self):
         success = True
         for table_name in self.list_tables():
@@ -172,7 +171,7 @@ class Database:
         self.metadata['tables'][table_name]['column_families'] = list(
             column_families_dict.keys())
 
-        return True, "Table altered successfully."
+        return self.updateMetadata(self.metadata), "Table altered successfully."
 
     #############################
     ###   General Commands    ###

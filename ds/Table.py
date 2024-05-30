@@ -13,7 +13,6 @@ class Table:
         self.versions = versions
 
     def loadFamily(self, col_family):
-        print(self.table_path + col_family + '.json')
         return loadJsonFile(self.table_path + col_family + '.json')
 
     def saveFamily(self, col_family, family_data):
@@ -60,19 +59,16 @@ class Table:
             return False, "Error saving data"
         return True, "Data saved successfully"
 
-    def get(self, row_id: str, col_family: str):
+    def get(self, row_id: str):
         row_id = str(row_id)
-        col_family = str(col_family)
 
-        if col_family not in self.column_families:
-            return False, "Column family not found in table"
-
-        family_data = self.loadFamily(col_family)
-
-        if row_id not in family_data:
-            return False, "Row not found in table"
-
-        return True, self.data[col_family][row_id]
+        all_data = {}
+        # This will get all the data for the specified row_id
+        for cf in self.column_families:
+            family_data = self.loadFamily(cf)
+            if row_id in family_data:
+                all_data[cf] = family_data[row_id]
+        return True, all_data
 
     def scan(self):
         all_data = {}
@@ -118,25 +114,22 @@ class Table:
             min_version = min([int(key) for key in value_versions.keys()])
             del value_versions[str(min_version)]
 
-        self.data[col_family][row_id][col_name] = value_versions
+        family_data[row_id][col_name] = value_versions
 
         return self.saveFamily(col_family, family_data), "Data deleted successfully"
 
-    def delete_all(self, row_id: str, col_family: str):
+    def delete_all(self, row_id: str):
         row_id = str(row_id)
-        col_family = str(col_family)
 
-        if col_family not in self.column_families:
-            return False, "Column family not found in table"
+        # This will delete for all column families the row with the specified row_id
 
-        family_data = self.loadFamily(col_family)
-
-        if row_id not in family_data:
-            return False, "Row not found in table"
-
-        del family_data[row_id]
-
-        return self.saveFamily(col_family, family_data), "Data deleted successfully"
+        for cf in self.column_families:
+            family_data = self.loadFamily(cf)
+            if row_id in family_data:
+                del family_data[row_id]
+                if not self.saveFamily(cf, family_data):
+                    return False, "Error saving data"
+        return True, "Data deleted successfully"
 
     def count(self):
         rows = set()
